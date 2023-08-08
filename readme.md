@@ -119,7 +119,7 @@ conda install -c conda-forge urllib3==1.26.15
 conda install -c conda-forge opencv-python==4.5.4.60
 ```
 #### 4. Extending the appium-python-client
-To create a customized user experience, replace the existing `action_helpers.py` file with a newly modified version, [here](http://github.com/EP-Detector/EP-Detector/Appium_externed/action_helpers.py). The path is conveniently located at `python-client/appium/webdriver/extensions/`(conda虚拟环境或者python环境下的子路径).
+To create a customized user experience, replace the existing `action_helpers.py` file with a newly modified version, [here](http://github.com/EP-Detector/EP-Detector/Appium_externed/action_helpers.py). The path is conveniently located at `python-client/appium/webdriver/extensions/`(Subordinate Directories within a Conda Virtual Environment or Python Environment).
 ### Seamless Deployment
 #### 1. Enabling USB Debugging on Android Device
 As an example, for OPPO Reno 5K, Android 13, you should enable these options:
