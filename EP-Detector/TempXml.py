@@ -1,4 +1,3 @@
-
 import time
 from appium import webdriver
 from appium.webdriver.common.touch_action import TouchAction
@@ -11,56 +10,47 @@ import subprocess
 import re
 from xml.etree import ElementTree as ET
 
-
-
 if __name__ == '__main__':
+    '''Main entry point for the script. Handles device connection and captures screenshot & activity information.'''
 
-    desc={}
+    # Define device configuration
+    desc = {
+        'deviceName': '127.0.0.1:291af785',   # Device name from `adb devices`
+        'platformVersion': '11',              # Device version found in: Settings -> About phone
+        'platformName': 'Android'             # Device type, either iOS or Android
+    }
 
-    desc['deviceName']='127.0.0.1:291af785'#手机设备名称，adb devices
-    desc['platformVersion']='11'#手机版本，在手机中：设置--关于手机
-    desc['platformName']='Android' #手机类型，ios或android
+    # Establish connection to Appium server
+    driver = webdriver.Remote('http://127.0.0.1:4723/wd/hub', desc)
 
+    # Initialize empty list for misOperations
+    misOperations = []
 
-    #启动服务端，再cmd窗口输入appium.如果appium没有安装好，可以打开appium-desktop.也相当于启动了服务
-
-    driver=webdriver.Remote('http://127.0.0.1:4723/wd/hub',desc)
- 
-
-    # time.sleep(1)
-    misOperations=[]
-
-
-    # image = np.zeros(0)
+    # Attempt to get a screenshot from the device
     try:
-        image = driver.get_screenshot_as_base64()
-
-        image = base64.b64decode(image)
-        image = np.frombuffer(image,np.uint8)
-        image = cv2.imdecode(image,cv2.IMREAD_COLOR)
-
+        image_data = driver.get_screenshot_as_base64()
+        image = base64.b64decode(image_data)
+        image = np.frombuffer(image, np.uint8)
+        image = cv2.imdecode(image, cv2.IMREAD_COLOR)
     except:
         image = None
 
+    # Retrieve current activity name
     actiName = driver.current_activity
 
-    pageSor=driver.page_source
-    # try:
-    #     pageSor=driver.page_source
-    # except:
-    #     pageSor=driver.page_source
+    # Fetch the current page's XML source
+    pageSor = driver.page_source
 
+    # Write the XML source to a file
+    with open(f'the{actiName}xmlRes.xml', 'w', encoding='utf-8') as f:
+        f.write(pageSor)
 
-    root = ET.fromstring(pageSor)
-    with open('the'+actiName+'xmlRes.xml','w',encoding='utf-8') as f:
-        f.write(driver.page_source)
+    # Save the screenshot as an image
+    if image is not None:
+        cv2.imwrite(f'the{actiName}scanRes.jpg', image)
 
-
-    cv2.imwrite('the'+actiName+'scanRes.jpg', image)
-
-
-
-    print('misopee!',misOperations)
+    # Display the misOperations
+    print('Misoperations:', misOperations)
 
 
 

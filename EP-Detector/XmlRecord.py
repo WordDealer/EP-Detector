@@ -68,71 +68,80 @@ class ActRecord():
         if len(childNodes) != 0:
             for node in childNodes:
                 self.GetTreeAllIds(node, resultList)
-
-                
-
     def Add(self, activity, act):
-        #判断是否在列表中
-        #记录相关的activity以及记录相关的操作
+        '''
+        Check if an activity is in the list. If not, add it.
+        Also, record the associated operation.
+        
+        Args:
+        - activity: The XML representation of the activity.
+        - act: The associated action for the activity.
+        '''
+        
         isRepe = False
         for xml in self.activityList:
-            if self.compXml(activity,xml):
-              isRepe = True
-              break  
+            if self.compXml(activity, xml):
+                isRepe = True
+                break  
 
         if not isRepe:
             if self.undTesActiID == -1:
-                # self.undTesActiID += 1
                 temp = []
             else:
                 temp = copy.deepcopy(self.actList[self.undTesActiID])
                 temp.append(act)
             self.activityList.append(activity)
             self.actList.append(temp)
-            print('afterAppendddddddd')
-            print(len(self.activityList),self.actList)
-
-
+            print('After appending:')
+            print(len(self.activityList), self.actList)
 
     def Get(self):
+        '''
+        Increment the undTesActiID and retrieve the corresponding activity and action.
+        
+        Returns:
+        - tuple: The activity and its corresponding action or (None, None) if out of range.
+        '''
         self.undTesActiID += 1
-        if self.undTesActiID<len(self.activityList):
+        if self.undTesActiID < len(self.activityList):
             return self.activityList[self.undTesActiID], self.actList[self.undTesActiID]
         else:
             return None, None
 
-    def Save(self,appName,fileCount):
+    def Save(self, appName, fileCount):
+        '''
+        Save the app's activities and actions to a file.
+        
+        Args:
+        - appName: The name of the app.
+        - fileCount: The file count for naming.
+        '''
         numActList = copy.deepcopy(self.actList)
-
         for i in range(len(numActList)):
-    
             for j in range(len(numActList[i])):
                 numActList[i][j][2] = numActList[i][j][2].value
-        theData = {'appName':appName,'undTesActiID':self.undTesActiID,'ativiLi':self.activityList,'actLi':numActList,'fileCount':fileCount}
-
-        with  open("theData.txt", "w",encoding="utf-8")as file:
-            fileData = json.dumps(theData)
-            file.write(fileData)
-            file.close()
+        theData = {'appName': appName, 'undTesActiID': self.undTesActiID, 'ativiLi': self.activityList, 'actLi': numActList, 'fileCount': fileCount}
+        with open("theData.txt", "w", encoding="utf-8") as file:
+            file.write(json.dumps(theData))
 
     def SaveEnvirEP(self, EnMisOp):
-        self.EnPageList.append({'actiId':self.undTesActiID,'enMisOp':EnMisOp})
-
-
-        with  open("theEnvFile.txt", "w", encoding="utf-8") as file:
-            fileData = json.dumps(self.EnPageList)
-            file.write(fileData)
-            file.close()
+        '''
+        Save the environment endpoint and related data to a file.
+        
+        Args:
+        - EnMisOp: The environment missing operation.
+        '''
+        self.EnPageList.append({'actiId': self.undTesActiID, 'enMisOp': EnMisOp})
+        with open("theEnvFile.txt", "w", encoding="utf-8") as file:
+            file.write(json.dumps(self.EnPageList))
 
     def LoadEnvirEP(self):
-        with  open("theEnvFile.txt", "r", encoding="utf-8") as file:
-            theData = file.read()
-            theData = json.loads(theData)
-
+        '''
+        Load the environment endpoint data from a file.
+        '''
+        with open("theEnvFile.txt", "r", encoding="utf-8") as file:
+            theData = json.loads(file.read())
             self.EnPageList = theData
-
-
-
 
     def Load(self,appName):
         with  open("theData.txt", "r",encoding="utf-8")as file:
@@ -152,16 +161,11 @@ class ActRecord():
                 self.undTesActiID = theData['undTesActiID']-1
                 self.activityList = theData['ativiLi']
                 fileCount = theData['fileCount']
-
                 numActList = theData['actLi']
-
                 for i in range(len(numActList)):
-                    
                     for j in range(len(numActList[i])):
                         numActList[i][j][2] = Behaviour(int(numActList[i][j][2])) 
-
                 self.actList = numActList
                 self.LoadEnvirEP()
-
                 print('loaded!')
                 return True,fileCount

@@ -1,12 +1,10 @@
 from behaviour import Behaviour
-
 import re
 import time
 from appium.webdriver.common.touch_action import TouchAction
 from appium.webdriver.common.multi_action import MultiAction
 import subprocess
 from xml.etree import ElementTree as ET
-
 from behaviour import clickActList,downSwipeActList,otherSwipeActList
 
 class Enviromen:
@@ -35,162 +33,123 @@ class Enviromen:
         self.timer = tester.timer
         self.WeakenEnv()
 
-
     def WeakenEnv(self):
-        order = 'adb shell echo powersave > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor'  # 获取连接设备
-
-        pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
-
+        '''Set the CPU governor mode to 'powersave' using adb command.'''
+        order = 'adb shell echo powersave > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor'
+        subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
 
     def CheckAndInit(self):
-        # #第一步什么都不做，立刻比较，确认是否一致
-        if self.clarriWay == 'pic':
-            try:
-                nowPic = self.driver.screenshot()
-            except:
-                nowPic = None
-        else:
-            try:
-                nowPic = self.driver.page_source
-            except:
-                nowPic = None
+        '''Check and initialize the app to a specific state based on visual or page source comparison.
 
-        theres=self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari)
-        print('no act:',theres)
-        if theres:
-            return True
+        The method tries to compare the current state of the app to a predefined "true" state.
+        It employs various actions (like keypresses) and checks to ensure the app reaches this state.
+        '''
 
-        self.driver.press_keycode(4)
-        time.sleep(0.5)
-        # #这里wait的是当前acti名字
-
-
-
-
-        if self.clarriWay == 'pic':
-            try:
-                nowPic = self.driver.screenshot()
-            except:
-                nowPic = None
-        else:
-            try:
-                nowPic = self.driver.page_source
-            except:
-                nowPic = None
-
-        theres=self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari)
-        print('exit act:',theres)
-        if theres:
-            return True
-
-        if self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari): #如果开启了这个应用检查是否一样
-            # print('返回键后回归初始化状态')
-            return True
-
-        if len(self.nowAct)>0:
-            behav = self.nowAct[-1]
-            self.DoBehav(behav[0], behav[1],behav[-1])       
-            time.sleep(0.5)
-
+        def get_current_state():
+            '''Get the current state of the app either as a screenshot or page source.'''
             if self.clarriWay == 'pic':
                 try:
-                    nowPic = self.driver.screenshot()
+                    return self.driver.screenshot()
                 except:
-                    nowPic = None
+                    return None
             else:
                 try:
-                    nowPic = self.driver.page_source
+                    return self.driver.page_source
                 except:
-                    nowPic = None
+                    return None
 
+        # Check if current state matches without any action
+        nowPic = get_current_state()
+        theres = self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari)
+        print('No action:', theres)
+        if theres:
+            return True
 
-            if self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari): #如果开启了这个应用检查是否一样
-                # print('返回键后回归初始化状态')
+        # Perform back key action and then check state again
+        self.driver.press_keycode(4)
+        time.sleep(0.5)
+        nowPic = get_current_state()
+        theres = self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari)
+        print('Exit action:', theres)
+        if theres:
+            return True
+
+        # Check if any previous actions were stored and execute them
+        if len(self.nowAct) > 0:
+            behav = self.nowAct[-1]
+            self.DoBehav(behav[0], behav[1], behav[-1])       
+            time.sleep(0.5)
+            nowPic = get_current_state()
+            if self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari):
                 return True
 
-
-
-
-        #如果不一样或者无法跳过广告页面
-        #第四步关闭app
-        # print('关闭app')
+        # If still not matched, try to restart the app
         try:
-            self.driver.terminate_app(self.appName) #关闭app
+            self.driver.terminate_app(self.appName)  # Close app
         except:
-            print('no need to ter') #关闭app
-        #第五步重启
+            print('No need to terminate app')
 
+        # Try to relaunch the app activity
         try:
-            self.driver.start_activity(self.appName, self.mainActiName)  # 检查一下能否回到这个界面？
+            self.driver.start_activity(self.appName, self.mainActiName)
         except:
-            print('error!!')
+            print('Error while starting activity!')
             self.driver.press_keycode(4)
             time.sleep(0.1)
             self.driver.press_keycode(4)
-            self.driver.start_activity(self.appName, self.mainActiName)  # 再开
-
+            self.driver.start_activity(self.appName, self.mainActiName)
 
         isStart = self.WaitXml(12)
-
-
-        if(isStart):
+        if isStart:
             self.DoAct()
 
+        nowPic = get_current_state()
+        print('checktrueMain', self.compXml(self.mainActiIma, self.trueMainImg))
 
-
-        if self.clarriWay == 'pic':
-            try:
-                nowPic = self.driver.screenshot()
-            except:
-                nowPic = None
-        else:
-            try:
-                nowPic = self.driver.page_source
-            except:
-                nowPic = None
-
-        print('checktrueMain',self.compXml(self.mainActiIma,self.trueMainImg))
-
-        if isStart and self.CheckIsSame(nowPic, self.trueMainImg,self.mainSimiLari): #如果开启了这个应用检查是否一样
-            # print('重启后初始化')
+        if isStart and self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari):
             return True
-
-        if not isStart:
+        elif not isStart:
             print('waitxml error')
         else:
-            print('check same 失败')
+            print('Check same failed')
 
-
-
-        print('初始化失败!')
+        print('Initialization failed!')
         return False
-    #对某一个区域进行测试
-
 
     def DoAct(self):
-
+        '''Execute a sequence of behaviors/actions from the "nowAct" list.'''
         for behav in self.nowAct:
-            self.DoBehav(behav[0], behav[1],behav[-1])
-            print('beh',behav)
+            self.DoBehav(behav[0], behav[1], behav[-1])
+            print('Behavior:', behav)
 
-    def compXml(self,firXml,secXml,simi=0.1):
-        if firXml==None:
-            return secXml==None
-        elif secXml ==None:
+    def compXml(self, firXml, secXml, simi=0.1):
+        '''Compare two XML strings based on similarity measure.
+
+        Args:
+            firXml (str): First XML string.
+            secXml (str): Second XML string.
+            simi (float): Similarity threshold.
+
+        Returns:
+            bool: True if the XMLs are similar within the threshold, otherwise False.
+        '''
+        
+        if firXml is None:
+            return secXml is None
+        elif secXml is None:
             return False
-        firRoot = ET.fromstring(firXml)
 
+        firRoot = ET.fromstring(firXml)
         secRoot = ET.fromstring(secXml)
 
         firIdList = []
         secIdList = []
         
-        self.GetTreeAllIds(firRoot,firIdList)
-        self.GetTreeAllIds(secRoot,secIdList)
+        # Get all IDs from both XML trees
+        self.GetTreeAllIds(firRoot, firIdList)
+        self.GetTreeAllIds(secRoot, secIdList)
 
-
-        saNum = 0
-        diNum = 0
+        saNum, diNum = 0, 0
 
         for firId in firIdList:
             if firId in secIdList:
@@ -207,303 +166,238 @@ class Enviromen:
         if saNum == 0:
             return False
 
+        print('Difference Ratio:', diNum, saNum)
+        return (diNum*1.0/saNum) < simi
 
-        print('diNum*1.0/saNum',diNum,saNum)
-        return (diNum*1.0/saNum)<simi
+    def GetTreeAllIds(self, rootNode, resultList):
+        '''Recursively extract all unique IDs from an XML tree.
 
-
-    def GetTreeAllIds(self,rootNode, resultList):
-        # self.uniqueID += 1
-
-        resId = rootNode.attrib.get('bounds')  #resource-id
+        Args:
+            rootNode (ET.Element): The starting XML tree node.
+            resultList (list): List to store extracted IDs.
+        '''
+        
+        resId = rootNode.attrib.get('bounds')
 
         if resId and resId not in resultList:
             resultList.append(resId)
 
-        childNodes = rootNode.getchildren()
-        if len(childNodes) != 0:
-            for node in childNodes:
-                self.GetTreeAllIds(node, resultList)
-
-
+        for node in rootNode.getchildren():
+            self.GetTreeAllIds(node, resultList)
 
     def WaitXml(self, timeout=10):
+        '''Wait for a specific XML state within a timeout.
 
+        Args:
+            timeout (int): Duration in seconds to wait for the desired XML state.
+
+        Returns:
+            bool: True if desired XML state is found, otherwise False.
+        '''
+        
         deadline = time.time() + timeout
         while time.time() < deadline:
             current_xml = self.driver.page_source
-            # print('main wait current_xml,self.mainActiIma')
-            if self.compXml(current_xml,self.mainActiIma,0.05):
+            if self.compXml(current_xml, self.mainActiIma, 0.05):
                 return True
-            time.sleep(.5)
+            time.sleep(0.5)
         return False
 
+    def CheckIsSame(self, firPic, secPic, simi):
+        '''Check if two given inputs (either images or XMLs) are similar.
 
+        Args:
+            firPic (str): First input (either image path or XML string).
+            secPic (str): Second input (either image path or XML string).
+            simi (float): Similarity threshold.
 
-    def CheckIsSame(self,firPic,secPic,simi):
+        Returns:
+            bool: True if inputs are similar within the threshold, otherwise False.
+        '''
+        
         if self.clarriWay == 'pic':
-            return self.compareHist(firPic,secPic,simi)
+            return self.compareHist(firPic, secPic, simi)
         else:
-            # print('check is same!!! firPic,secPic')
-            return self.compXml(firPic,secPic,simi)
+            return self.compXml(firPic, secPic, simi)
 
-
-
-
-    def  TestOneBoundAllPagesInEnviron(self, bound):
+    def TestOneBoundAllPagesInEnvironment(self, bound):
+        '''Tests a boundary over all pages in the current environment.
+        
+        Args:
+            bound (str): A string representing the boundary coordinates.
+            
+        Returns:
+            list: List of misoperations detected during the test.
+        '''
+        
         misOpe = []
-
-
         self.timer.navStart()
-
         self.CheckAndInit()
         self.timer.navOver()
-
-
         self.timer.genStart()
 
-        if self.clarriWay == 'pic':
-            try:
-                preActImg = self.driver.screenshot()
-            except:
-                preActImg = None
-        else:
-            try:
-                preActImg = self.driver.page_source
-            except:
-                preActImg = None
+        # Fetching the image or page source based on the "clarriWay"
+        preActImg = self.driver.screenshot() if self.clarriWay == 'pic' else self.driver.page_source
 
-
-
-
-
-
+        # Extracting coordinates from the boundary string
         nums = re.findall(r"\d+", bound)
-        # print(nums)
-        lux = int(nums[0])
-        luy = int(nums[1])
-        rdx = int(nums[2])
-        rdy = int(nums[3])
+        lux, luy, rdx, rdy = map(int, nums)
+        
+        # Calculating the middle of the coordinates
+        midX, midY = (lux+rdx) // 2, (luy+rdy) // 2
 
-        midX = int((lux+rdx)*0.5)
-        midY = int((luy+rdy)*0.5)
+        # Ensuring the coordinates are within valid range
+        cliX, cliY = min(max(1, midX), self.widt-1), min(max(1, midY), self.heit-1)
 
-
-        cliX = midX
-        cliY = midY
-
-
-
-        if cliX<0:
-            cliX = 1
-        if cliX>self.widt:
-            cliX = self.widt-1
-        if cliY < 0:
-            cliY = 1
-        if cliY > self.heit:
-            cliY = self.heit - 1
-
-
-
-        self.DoBehav(cliX,cliY,Behaviour.click)
+        # Perform click action at the calculated coordinate
+        self.DoBehav(cliX, cliY, Behaviour.click)
         time.sleep(1)
-
-
         self.timer.genOver()
 
-
-
-        if self.clarriWay == 'pic':
-            try:
-                fir_cli_CenterImg = self.driver.screenshot()
-            except:
-                fir_cli_CenterImg = None
-        else:
-            try:
-                fir_cli_CenterImg = self.driver.page_source
-            except:
-                fir_cli_CenterImg = None
-
-
-
-
-
+        # Fetching the image or page source post action
+        fir_cli_CenterImg = self.driver.screenshot() if self.clarriWay == 'pic' else self.driver.page_source
 
         self.GetAllStatus()
-
         mybehav = Behaviour.doubleClick
 
-
-        if ( self.CheckIsSame(fir_cli_CenterImg, preActImg, self.simiLari)):
+        # Decide behavior based on similarity check
+        if self.CheckIsSame(fir_cli_CenterImg, preActImg, self.simiLari):
             self.timer.genStart()
-            self.DoBehav(cliX,cliY,Behaviour.doubleClick)
+            self.DoBehav(cliX, cliY, Behaviour.doubleClick)
             self.timer.genOver()
             mybehav = Behaviour.doubleClick
         else:
             self.AddActiToList([cliX, cliY, Behaviour.click])
-            try:
-                self.timer.genStart()
-                self.DoBehav(cliX,cliY,Behaviour.click)
-                self.timer.genOver()
-                mybehav = Behaviour.click
-            except:
-                pass
-
+            self.timer.genStart()
+            self.DoBehav(cliX, cliY, Behaviour.click)
+            self.timer.genOver()
 
         self.timer.oraStart()
 
+        # Extract all status metrics
         oneRec, oneSub, oneProNum, oneRom = self.GetAllStatus()
+        print('oneNet:', oneRec, oneSub)
+        print('Pro  Rom:', oneProNum, oneRom)
 
-        print('oneNet',oneRec,oneSub)
-   
-        print('Pro  Rom',oneProNum,oneRom)
-
-        r=50
-        g=50
-        b=50
-
-        if(abs(oneSub)>25000 or abs(oneRec)>29000 or abs(oneProNum)>3 or abs(oneRom)>10240):
-            if (abs(oneSub)>15000 or abs(oneRec)>19000):
-                r=190
-            if (abs(oneProNum)>2):
-                g=190
-            if (abs(oneRom)>1536):
-                b=190           
-            misOpe.append((cliX, cliY, (r,g,b),mybehav.value))
+        r, g, b = 50, 50, 50
+        # Check for anomalies in the extracted metrics and adjust RGB values
+        if abs(oneSub) > 25000 or abs(oneRec) > 29000 or abs(oneProNum) > 3 or abs(oneRom) > 10240:
+            r = 190 if abs(oneSub) > 15000 or abs(oneRec) > 19000 else r
+            g = 190 if abs(oneProNum) > 2 else g
+            b = 190 if abs(oneRom) > 1536 else b
+            misOpe.append((cliX, cliY, (r, g, b), mybehav.value))
 
         self.timer.oraOver()
 
-
-
-
         return misOpe
 
-
-
-    def AddActiToList(self,act):
+    def AddActiToList(self, act):
+        '''Adds the action to the activity record.
+        
+        Args:
+            act: The action to be recorded.
+        '''
         try:
-            acti = self.driver.page_source #string 类型
-            order = 'adb shell dumpsys window | findstr mCurrentFocus'  # 获取连接设备
+            acti = self.driver.page_source  # of type string
+            order = 'adb shell dumpsys window | findstr mCurrentFocus'  # Retrieve connected device
 
             pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
             subRes = pi.stdout.read().decode('utf-8').replace("\n", " ").replace("\r", " ")
 
+            # Check if the current activity belongs to the target app
             if self.appName not in subRes:
-                print('not this app')
+                print('Not this app')
                 return
-            #获取当前的activity，以及所做操作
+
         except:
             return
 
-        print('add!!!')
+        print('Added to list!')
         self.actRecord.Add(acti, act)
 
 
     def GetAllStatus(self):
-        RecFlow,SubFlow = self.GetAllNetflow()
+        '''Fetch all status metrics and calculate the difference from previous values.'''
+        
+        RecFlow, SubFlow = self.GetAllNetflow()
         ProNum = self.GetProcNum()
         Rom = self.GetRom()
 
-
-        oneRec = int(RecFlow)-int(self.preRecFlow)
-        oneSub = int(SubFlow)-int(self.preSubFlow)
-
-        oneProNum = int(ProNum)-int(self.preProNum)
-        oneRom = int(Rom)-int(self.preRom)
-
+        oneRec = int(RecFlow) - int(self.preRecFlow)
+        oneSub = int(SubFlow) - int(self.preSubFlow)
+        oneProNum = int(ProNum) - int(self.preProNum)
+        oneRom = int(Rom) - int(self.preRom)
 
         self.preRecFlow = RecFlow
         self.preSubFlow = SubFlow
         self.preProNum = ProNum
         self.preRom = Rom
 
-        return oneRec,oneSub,oneProNum,oneRom
-
-
+        return oneRec, oneSub, oneProNum, oneRom
 
 
     def GetNetflow(self):
-
-        order = 'adb shell pidof' + self.appName
+        '''Retrieve network flow information for the application.'''
+        
+        order = 'adb shell pidof ' + self.appName
         pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
         pid = pi.stdout.read().decode('utf-8').replace("\n", " ").replace("\r", " ")
-        print('pid', pid)
 
         order = 'adb shell cat /proc/' + pid + '/net/dev'
-
         pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
         subRes = pi.stdout.read().decode('utf-8').replace("\n", " ").replace("\r", " ")
 
         re1 = r'wlan0:(.*?)rmnet_data2'
-        theee = re.findall(re1, subRes)[0].split()
-        recByte = theee[0]
-        subByte = theee[8]
-        print('流量')
-        print(recByte, subByte)
+        values = re.findall(re1, subRes)[0].split()
+        recByte, subByte = values[0], values[8]
+
         return recByte, subByte
 
 
     def GetRom(self):
-
-        order = 'adb shell cat /proc/meminfo' 
-        #
+        '''Retrieve the free memory information.'''
+        
+        order = 'adb shell cat /proc/meminfo'
         pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
         subRes = pi.stdout.read().decode('utf-8').replace("\n", " ").replace("\r", " ")
 
-
-
         re1 = r'MemFree:(.*?)MemAvailable:'
-        theee = re.findall(re1, subRes)[0].split()[0]
-        # print('theee',theee)
+        freeMemory = re.findall(re1, subRes)[0].split()[0]
 
-
-
-        # print(totalRam)
-
-
-        return  theee
+        return freeMemory
 
 
     def GetCpuInfo(self):
-
-        order = 'adb shell "dumpsys cpuinfo | grep ' +self.appName
-        #
+        '''Retrieve the CPU usage information for the application.'''
+        
+        order = 'adb shell "dumpsys cpuinfo | grep ' + self.appName + '"'
         pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
-
         res = pi.stdout.read().decode('utf-8')
 
-        theee = res.split("%")[0]
+        cpuUsage = res.split("%")[0]
 
-        # print(totalRam)
-
-
-        return  theee
-
-
-
+        return cpuUsage
 
     def GetProcNum(self):
-        order = 'adb shell ps | findstr '+self.appName+''  
-        #
+        '''Get the number of processes for the application.'''
+        
+        order = 'adb shell ps | findstr ' + self.appName
         pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
-        subRes = pi.stdout.read().decode('utf-8') #.replace("\n", " ").replace("\r", " ")
+        subRes = pi.stdout.read().decode('utf-8')
 
-        return  subRes.count(self.appName)
-
-
-
-
+        return subRes.count(self.appName)
 
     def GetAllNetflow(self):
-
-
-        order = 'adb shell cat /proc/net/dev'  # 获取连接设备
-
+        '''Fetch network flow information based on the network connection type.
+        
+        Returns:
+            tuple: Received and submitted bytes.
+        '''
+        order = 'adb shell cat /proc/net/dev'  # Retrieve connected device
         pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
         subRes = pi.stdout.read().decode('utf-8').replace("\n", " ").replace("\r", " ")
 
-
-        # print('subRes',subRes)
+        # Determine the pattern to search based on the network connection type
         if self.netCon == 'wlan':
             re1 = r'wlan0:(.*?)[A-Za-z]'
         elif self.netCon == 'data':
@@ -511,17 +405,11 @@ class Enviromen:
         elif self.netCon == 'imitator':
             re1 = r' lo:(.*?) [A-Za-z]'
 
-        theee = re.findall(re1, subRes)[0].split()
-        # print('theee',theee)
-        recByte = theee[0]
-        subByte = theee[8]
-        # print('流量')
-        # print(recByte, subByte)
+        network_values = re.findall(re1, subRes)[0].split()
+        recByte = network_values[0]
+        subByte = network_values[8]
+
         return recByte, subByte
-
-
-
-
 
     def DoBehav(self,cliX,cliY,behav):
         if behav == Behaviour.click:
@@ -574,7 +462,6 @@ class Enviromen:
             time.sleep(0.1)
             self.driver.tap([(cliX,cliY)],800)
 
-
         elif behav == Behaviour.misLongClick2:
             self.driver.tap([(cliX,cliY)],200)
 
@@ -594,9 +481,6 @@ class Enviromen:
             self.driver.tap([(cliX,cliY)])
             time.sleep(0.1)
             self.DoSwipe(cliX, cliY,"down","swipe")
-
-
-
         elif behav ==Behaviour.misLeftScroll1:
             self.driver.tap([(cliX,cliY)])
             time.sleep(0.1)   
@@ -614,9 +498,6 @@ class Enviromen:
             time.sleep(0.1)      
             self.DoSwipe(cliX, cliY,"down","scroll")
 
-
-
-
         elif behav ==Behaviour.misLeftScroll2:  
             self.DoMisScroll2(cliX, cliY,"left","scroll")
         elif behav == Behaviour.misRightScroll2:
@@ -625,7 +506,6 @@ class Enviromen:
             self.DoMisScroll2(cliX, cliY,"up","scroll")
         elif behav == Behaviour.misDownScroll2:
             self.DoMisScroll2(cliX, cliY,"down","scroll")
-
 
         elif behav ==Behaviour.misLeftScroll3:  
             self.DoMisScroll3(cliX, cliY,"left",3)
@@ -653,10 +533,6 @@ class Enviromen:
             self.DoMisScroll3(cliX, cliY,"up",5)
         elif behav == Behaviour.misDownScroll5:
             self.DoMisScroll3(cliX, cliY,"down",5)
-
-
-
-
 
     def DoMisScroll2(self,cliX,cliY,dir,actype):
         if cliX<0:
@@ -695,11 +571,8 @@ class Enviromen:
         else:
             self.driver.swipeAndHold(cliX, cliY,diX,diY,200)
         
-
         time.sleep(0.1) 
         self.driver.tap([(diX,diY)],500)
-
-
 
     def DoMisScroll3(self,cliX,cliY,dir,actype,misType):
         if cliX<0:
@@ -734,7 +607,6 @@ class Enviromen:
             if diY > self.heit:
                 diY = self.heit - 1
 
-
         midX = int((diX+diX)*0.5)
         midY = int((diY+diY)*0.5)
 
@@ -750,8 +622,6 @@ class Enviromen:
             self.driver.swipeAndHold(cliX, cliY,midX,midY,100)
             time.sleep(0.1)
             self.driver.swipeAndHold(midX, midY,diX,diY,100)
-
-
 
     def DoSwipe(self,cliX,cliY,dir,actype):
 
@@ -791,55 +661,50 @@ class Enviromen:
         else:
             self.driver.swipeAndHold(cliX, cliY,diX,diY,200)
 
+    def TripFinCap(self, cliX, cliY, isTrip):
+        '''
+        Adjusts the x and y coordinates within the screen boundaries and 
+        creates a multi-touch action sequence that possibly involves up to three touch points.
         
-
-
-    def TripFinCap(self,cliX, cliY,isTrip):
-        if cliX<0:
-            cliX = 1
-        if cliX>self.widt:
-            cliX = self.widt-1
-        if cliY < 0:
-            cliY = 1
-        if cliY > self.heit:
-            cliY = self.heit - 1
-
-        diX =cliX
-        diY =cliY
-
-        leX = diX-30
-        if leX<0:
-            leX = 1
-
-        riX = diX+30
-        if riX>self.widt:
-            riX = self.widt-1
-
-        diY = diY + 200
-        if diY > self.heit:
-            diY = self.heit - 1
+        Args:
+        cliX (int): Initial x-coordinate.
+        cliY (int): Initial y-coordinate.
+        isTrip (bool): If True, a third touch point is involved in the sequence.
+        '''
         
-
+        # Adjust the coordinates within the screen boundaries
+        cliX = max(1, min(cliX, self.widt - 1))
+        cliY = max(1, min(cliY, self.heit - 1))
+        
+        diX = cliX
+        diY = cliY + 200
+        diY = min(diY, self.heit - 1)
+        
+        leX = max(1, diX - 30)
+        riX = min(self.widt - 1, diX + 30)
+        
+        # Define touch actions
         action1 = TouchAction(self.driver)
+        action1.press(x=leX, y=cliY).wait(300).move_to(x=leX, y=diY).wait(300).release()
+        
         action2 = TouchAction(self.driver)
+        action2.press(x=cliX, y=cliY).wait(300).move_to(x=diX, y=diY).wait(300).release()
 
-
-
-        action1.press(x=leX,y=cliY).wait(300).move_to(x=leX,y=diY).wait(300).release() #.wait(1000)
-        action2.press(x=cliX,y=cliY).wait(300).move_to(x=diX,y=diY).wait(300).release() #.wait(1000)
-
-        # 创建多点触控对象
+        # Create multi-touch action object
         multi_action = MultiAction(self.driver)
-        print(type(multi_action))
-        # 同时执行 action1 和 action2 动作
-        multi_action.add(action1)
-        multi_action.add(action2)
+        multi_action.add(action1, action2)
+        
+        # If trip action is needed, add a third action
         if isTrip:
-            action3 = TouchAction(self.driver)        
-            action3.press(x=riX,y=cliY).wait(300).move_to(x=riX,y=diY).wait(300).release()
+            action3 = TouchAction(self.driver)
+            action3.press(x=riX, y=cliY).wait(300).move_to(x=riX, y=diY).wait(300).release()
             multi_action.add(action3)
-        # 执行多点触控
+        
+        # Execute the multi-touch action sequence
         multi_action.perform()
-        self.driver.swipe(cliX, cliY,diX,diY)
+
+        # Execute the swipe action
+        self.driver.swipe(cliX, cliY, diX, diY)
+
 
 

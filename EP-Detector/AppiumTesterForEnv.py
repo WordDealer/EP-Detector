@@ -8,61 +8,49 @@ import base64
 from appium import webdriver
 from appium.webdriver.common.touch_action import TouchAction
 from appium.webdriver.common.multi_action import MultiAction
-
 from xml.etree import ElementTree as ET
-
 import subprocess
-
-
 from behaviour import Behaviour,orderBehavList,clickActList,longClickList,downSwipeActList,otherSwipeActList
 from XmlRecord import ActRecord
-
-# from Step1SpaTest import Spacing
-# from Step2Operation import Operation
-
 from Step3Enviromen import Enviromen
 import json
-
 from Timer import  TimeRecord
 
-# adb shell dumpsys activity activities | findstr mResumedActivity
+class TestApp:
 
-class TestApp():
+    def __init__(self, driver, net_con="wlan", app_name=None, main_activity_name="com.yy.hiyo.MainActivity"):
+        """
+        Initialize TestApp class.
 
-    def __init__(self,dri):
-        # self.uniqueID = 1
-        self.driver = dri # 设备参数
+        Args:
+        - driver: device parameters.
+        - net_con: network connection type. Can be "wlan", "data", or "imitator".
+        - app_name: name of the app. e.g., com.eg.android.AlipayGphone.
+        - main_activity_name: name of the main activity for the app.
+        """
 
-        self.netCon = "wlan" #wlan  data  imitator
+        self.driver = driver
+        self.net_con = net_con
 
-        self.appName =  None # app名字 com.eg.android.AlipayGphone    com.UCMobile
-        self.mainActiName = "com.yy.hiyo.MainActivity"
-         # com.eg.android.AlipayGphone.AlipayLogin   com.uc.browser.InnerUCMobile
-        # mainAcitivity的名字
+        self.app_name = app_name
+        self.main_activity_name = main_activity_name
+
         self.xml = None
-        self.mainXml = None
-        self.actRecord = ActRecord() #记录act和activity以实现遍历
-        self.nowAct = [] #从mainActivity到当前activity所需要的操作步骤
-        self.simiLari = 0.7 #当前页面不操作时有滚动条，两个页面相似度
-        self.waitTime = 2
-        # self.mainActiIma = None #主页图片
-        self.mainSimiLari = 0.8 #主页有滚动条时两个主页相似度
-        self.clarriWay = 'xml' #pic xml
-        self.fileCount = 0
-        self.misTouch = 71
-        self.isConti = True
-        self.addLong = False
+        self.main_xml = None
+        self.act_record = ActRecord()  # Records actions and activities for traversal
+        self.current_actions = []  # Steps required to navigate from the main activity to the current one
+
+        self.similarity_threshold = 0.7  # Similarity threshold for pages without interaction but with scroll bars
+        self.wait_time = 2
+        self.main_similarity_threshold = 0.8  # Similarity threshold for the main page with scroll bars
+
+        self.clarity_way = 'xml'  # Options are 'pic' or 'xml'
+        self.file_count = 0
+        self.mistouch_threshold = 71
+        self.is_continuous = True
+        self.add_long_press = False  # Indicates if long press actions should be added
 
         self.timer = TimeRecord()
-
-
-
-
-
-
-
-
-
 
     def getHistSimiLari(self, stdimg, ocimg):
         if self.clarriWay == 'pic':
@@ -76,7 +64,6 @@ class TestApp():
             return imgocr[0, 1]
         else:
             firRoot = ET.fromstring(stdimg)
-
             secRoot = ET.fromstring(ocimg)
 
             firIdList = []
@@ -88,7 +75,6 @@ class TestApp():
 
             saNum = 0
             diNum = 0
-
             for firId in firIdList:
                 if firId in secIdList:
                     saNum += 1
@@ -105,9 +91,7 @@ class TestApp():
                 return 0.1
             return diNum*1.0/saNum+0.05
 
-
     def DoAct(self):
-
         for behav in self.nowAct:
             self.DoBehav(behav[0], behav[1],behav[-1])
             print('beh',behav)
@@ -185,8 +169,6 @@ class TestApp():
             time.sleep(0.1)
             self.DoSwipe(cliX, cliY,"down","swipe")
 
-
-
         elif behav ==Behaviour.misLeftScroll1:
             self.driver.tap([(cliX,cliY)])
             time.sleep(0.1)   
@@ -204,9 +186,6 @@ class TestApp():
             time.sleep(0.1)      
             self.DoSwipe(cliX, cliY,"down","scroll")
 
-
-
-
         elif behav ==Behaviour.misLeftScroll2:  
             self.DoMisScroll2(cliX, cliY,"left","scroll")
         elif behav == Behaviour.misRightScroll2:
@@ -215,7 +194,6 @@ class TestApp():
             self.DoMisScroll2(cliX, cliY,"up","scroll")
         elif behav == Behaviour.misDownScroll2:
             self.DoMisScroll2(cliX, cliY,"down","scroll")
-
 
         elif behav ==Behaviour.misLeftScroll3:  
             self.DoMisScroll3(cliX, cliY,"left",3)
@@ -243,9 +221,6 @@ class TestApp():
             self.DoMisScroll3(cliX, cliY,"up",5)
         elif behav == Behaviour.misDownScroll5:
             self.DoMisScroll3(cliX, cliY,"down",5)
-
-
-
 
     def DoMisScroll2(self,cliX,cliY,dir,actype):
         if cliX<0:
@@ -284,11 +259,8 @@ class TestApp():
         else:
             self.driver.swipeAndHold(cliX, cliY,diX,diY,200)
         
-
         time.sleep(0.1) 
         self.driver.tap([(diX,diY)],500)
-
-
 
     def DoMisScroll3(self,cliX,cliY,dir,actype,misType):
         if cliX<0:
@@ -303,7 +275,6 @@ class TestApp():
         offsetPix = 200
         if actype=="scroll":
             offsetPix = 1500
-
         diX =cliX
         diY =cliY
         if dir == 'left':
@@ -323,7 +294,6 @@ class TestApp():
             if diY > self.heit:
                 diY = self.heit - 1
 
-
         midX = int((diX+diX)*0.5)
         midY = int((diY+diY)*0.5)
 
@@ -339,9 +309,6 @@ class TestApp():
             self.driver.swipeAndHold(cliX, cliY,midX,midY,100)
             time.sleep(0.1)
             self.driver.swipeAndHold(midX, midY,diX,diY,100)
-
-
-
 
     def TripFinCap(self,cliX, cliY,isTrip):
         if cliX<0:
@@ -367,33 +334,24 @@ class TestApp():
         diY = diY + 200
         if diY > self.heit:
             diY = self.heit - 1
-        
 
         action1 = TouchAction(self.driver)
         action2 = TouchAction(self.driver)
 
-
-
         action1.press(x=leX,y=cliY).wait(300).move_to(x=leX,y=diY).wait(300).release() #.wait(1000)
         action2.press(x=cliX,y=cliY).wait(300).move_to(x=diX,y=diY).wait(300).release() #.wait(1000)
 
-        # 创建多点触控对象
         multi_action = MultiAction(self.driver)
         print(type(multi_action))
-        # 同时执行 action1 和 action2 动作
         multi_action.add(action1)
         multi_action.add(action2)
         if isTrip:
             action3 = TouchAction(self.driver)        
             action3.press(x=riX,y=cliY).wait(300).move_to(x=riX,y=diY).wait(300).release()
             multi_action.add(action3)
-        # 执行多点触控
+
         multi_action.perform()
         self.driver.swipe(cliX, cliY,diX,diY)
-
-
-
-
 
     def DoSwipe(self,cliX,cliY,dir,actype):
 
@@ -433,11 +391,7 @@ class TestApp():
         else:
             self.driver.swipeAndHold(cliX, cliY,diX,diY,200)
 
-       
-
-
     def GetTreeAllBounds(self,rootNode, resultList):
-        # self.uniqueID += 1
 
         resId = rootNode.attrib.get('bounds')
 
@@ -449,16 +403,9 @@ class TestApp():
             for node in childNodes:
                 self.GetTreeAllBounds(node, resultList)
 
-
-
-
-
-
-
     def GetTreeAllIds(self,rootNode, resultList):
-        # self.uniqueID += 1
 
-        resId = rootNode.attrib.get('bounds')  #resource-id
+        resId = rootNode.attrib.get('bounds')
 
         if resId and resId not in resultList:
             resultList.append(resId)
@@ -468,12 +415,10 @@ class TestApp():
             for node in childNodes:
                 self.GetTreeAllIds(node, resultList)
 
-
     def GetTreeAll(self,rootNode, level, cliresult,scrresult,lonresult,allList,fullList):
-        # self.uniqueID += 1
 
         bounds = rootNode.attrib.get('bounds')
-        cliAble = rootNode.attrib.get('clickable')  #clickable  scrollable
+        cliAble = rootNode.attrib.get('clickable')  
         scroAble = rootNode.attrib.get('scrollable')
         lonAble = rootNode.attrib.get('long-clickable')  
         showAble = rootNode.attrib.get('displayed') 
@@ -496,54 +441,34 @@ class TestApp():
             for node in childNodes:
                 self.GetTreeAll(node, level + 1, cliresult,scrresult,lonresult,allList,fullList)
 
-
-
-
-
     def AfterGetTreeAddClick(self,rootNode, cliresult,allList,othcliresult,repeatLi):
-        # self.uniqueID += 1
 
         bounds = rootNode.attrib.get('bounds')
 
-
         if (bounds) and (bounds not in othcliresult) and (self.IsSmallBounds(bounds,allList)):
             othcliresult.append(bounds)
-
-
 
         childNodes = rootNode.getchildren()
         if len(childNodes) != 0:
             for node in childNodes:
                 self.AfterGetTreeAddClick(node, cliresult,allList,othcliresult,repeatLi)
 
-
     def IsSmallBounds(self,bounds,allList):
-        # print('boundsssss',bounds)
         nums = re.findall(r"\d+", bounds)
-        # print(nums)
         lux = int(nums[0])
         luy = int(nums[1])
         rdx = int(nums[2])
         rdy = int(nums[3])
-
-
 
         for bd in allList:
             if(lux==bd[0] and rdx==bd[2] and luy==bd[1] and rdy==bd[3]):
                 continue
             if(lux<=bd[0] and rdx>=bd[2] and luy<=bd[1] and rdy>=bd[3]):
                 return False
-
         return True
-
-
-
-
-
 
     def compXml(self,firXml,secXml,simi=0.1):
         firRoot = ET.fromstring(firXml)
-
         secRoot = ET.fromstring(secXml)
 
         firIdList = []
@@ -552,7 +477,6 @@ class TestApp():
         self.GetTreeAllIds(firRoot,firIdList)
         self.GetTreeAllIds(secRoot,secIdList)
 
-
         saNum = 0
         diNum = 0
 
@@ -567,19 +491,13 @@ class TestApp():
                 saNum += 1
             else:
                 diNum += 1         
-        
         if saNum == 0:
             return False
-
-
         print('diNum*1.0/saNum',diNum,saNum)
         return (diNum*1.0/saNum)<simi
 
-
-
     def compXmlBounds(self,firXml,secXml,simi=0.1):
         firRoot = ET.fromstring(firXml)
-
         secRoot = ET.fromstring(secXml)
 
         firIdList = []
@@ -588,16 +506,13 @@ class TestApp():
         self.GetTreeAllBounds(firRoot,firIdList)
         self.GetTreeAllBounds(secRoot,secIdList)
 
-
         saNum = 0
         diNum = 0
-
         for firId in firIdList:
             if firId in secIdList:
                 saNum += 1
             else:
                 diNum += 1 
-
         for secId in secIdList:
             if secId in firIdList:
                 saNum += 1
@@ -607,29 +522,22 @@ class TestApp():
         if saNum == 0:
             return False
 
-
         print('diNum*1.0/saNum',diNum,saNum)
         return (diNum*1.0/saNum)<simi
-
 
     def WaitMainXml(self, timeout=10):
 
         deadline = time.time() + timeout
         while time.time() < deadline:
             current_xml = self.driver.page_source
-            # print('main wait current_xml,self.mainXml')
             if self.compXml(current_xml,self.mainActiIma,0.05):
                 return True
             time.sleep(.5)
         return False
 
-
     def TestBoundsAllPagesEnviron(self,pageSor):
 
         misOperations = []
-
-
-
         try:
             image = self.driver.get_screenshot_as_base64()
    
@@ -641,10 +549,7 @@ class TestApp():
             image = None
 
         color = (140, 0, 255)
-
-
         enviro = Enviromen(self)
-
         for bound in pageSor:
             self.timer.conStart()
 
@@ -653,7 +558,6 @@ class TestApp():
             self.timer.conOver()
 
         actiName = self.driver.current_activity
-
 
         print(misOperations)
         print('start')
@@ -664,84 +568,89 @@ class TestApp():
                 cv2.putText(image,'ableNUm'+str(self.ableConNum),(50,100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
                 cv2.putText(image,'allNUm'+str(self.allConNum),(50,200), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
 
-
             cv2.imwrite(self.appName+'/the'+actiName+str(self.fileCount)+'enviroRes.jpg', image)
             self.fileCount += 1
 
         print('misopee!',misOperations)
-
-
-
-
         with  open(self.appName+'/the'+actiName+str(self.fileCount)+"Evi.txt", "w", encoding="utf-8") as file:
             fileData = json.dumps(misOperations)
             file.write(fileData)
             file.close()
 
-
-
-
         return misOperations
-
-
-
-
-
 
     def GetName(self):
         self.GetName2()
 
     def GetName2(self):
-        order = 'adb shell dumpsys activity activities | findstr topResumedActivity'  # 获取连接设备
+        '''
+        Extracts the name of the connected device and its main activity.
 
+        Attributes:
+        appName (str): The name of the connected device.
+        mainActiName (str): The name of the main activity.
+        '''
+
+        # Get information on the connected device
+        order = 'adb shell dumpsys activity activities | findstr topResumedActivity'
         pi = subprocess.Popen(order, shell=True, stdout=subprocess.PIPE)
+        
         subRes = pi.stdout.read().decode('utf-8').replace("\n", "").replace("\r", "")
         print(subRes)
+        
         theee = subRes.split()
         print(theee)
+        
+        # Extract app name and activity name
         fullName = theee[2].split('/')
         appName = fullName[0]
         actiName = fullName[1].split("}")[0]
+
+        # Check if the activity name starts with '.' and prepend with app name if so
         if actiName[0] == '.':
             actiName = appName + actiName
+
         print(appName, actiName)
-        self.appName=appName
+        self.appName = appName
         self.mainActiName = actiName
 
-
-
-
-    def TestAllPages(self): #总的测试函数
+    def TestAllPages(self):
+        '''
+        Test all pages for the given application.
+        
+        This method tries to systematically visit all app pages by simulating
+        user actions and checks for any potential risks or misbehaviors.
+        
+        Attributes:
+            appName (str): The name of the application being tested.
+            mainActiName (str): The name of the main activity of the application.
+            ...
+        '''
         dangerAction = []
 
+        # Ensure app name is available
         if not self.appName:
             self.GetName()
 
-        folder = os.path.exists(self.appName)
-        if not folder:
+        # Create a directory for the app if it doesn't exist
+        if not os.path.exists(self.appName):
             os.makedirs(self.appName)
 
-        self.heit = self.driver.get_window_size()['height'] #屏幕长款
+        # Get screen dimensions
+        self.heit = self.driver.get_window_size()['height']
         self.widt = self.driver.get_window_size()['width']
-        # print(heit, widt)
 
-
-
-
+        # Try to terminate the app and then restart the main activity
         try:
-            self.driver.terminate_app(self.appName) #关闭app
+            self.driver.terminate_app(self.appName)
         except:
-            print('no need to ter')
-        self.driver.start_activity(self.appName, self.mainActiName)  # 检查一下能否回到这个界面？
+            print('no need to terminate')
 
-
-
-        self.driver.wait_activity(self.mainActiName,10)  #等待开启主页面（用于跳广告）
-        # self.WaitXml(10)
+        self.driver.start_activity(self.appName, self.mainActiName)
+        self.driver.wait_activity(self.mainActiName, 10)
         time.sleep(20)
 
-        ## 1.软件登记信息，重启回到开始页面
-
+        # Record initial state of the app (screenshot or XML based on the approach chosen)
         if self.clarriWay == 'pic':
             try:
                 self.mainActiIma = self.driver.screenshot()
@@ -754,87 +663,69 @@ class TestApp():
                 print('xml error')
                 self.mainActiIma = None
 
-
-
-
+        # Configuration of similarity parameters
         simiLarity = 0.1
+        self.mainSimiLari = simiLarity - 0.05
 
-        
-
-
-        self.mainSimiLari = simiLarity-0.05
-
-
-
+        # Load previous test results if applicable
         isLoad = False
-
-        if self.isConti:  #加载之前的内容
-            isLoad,num = self.actRecord.Load(self.appName)
+        if self.isConti:
+            isLoad, num = self.actRecord.Load(self.appName)
             self.fileCount = num
-            print('befor')
+            print('before')
+
         if not isLoad:
-            self.actRecord.Add(self.mainActiIma,[])
-            
-            
-        ## 2。main页面加入待测试序列，并且保存其路径（上面的代码）
-            
+            self.actRecord.Add(self.mainActiIma, [])
 
+        thexml, act = self.actRecord.Get()
 
-
-        thexml,act = self.actRecord.Get()
-
+        # Main loop to iterate over all app pages and test them
         while thexml:
             self.timer.pageStart()
-            print('not start page ')
-            # print('acti',acti,'act',act)
+            print('not start page')
             self.xml = thexml
             self.nowAct = act
-            # d.app_start('com.dmzj.manhua')
-            try:
-                self.driver.terminate_app(self.appName) #关闭app
-            except:
-                print('no need to ter')
 
+            # Terminate and restart app for a fresh start
             try:
-                self.driver.start_activity(self.appName, self.mainActiName)  # 检查一下能否回到这个界面？
+                self.driver.terminate_app(self.appName)
+            except:
+                print('no need to terminate')
+
+            # Start the main activity and handle potential errors
+            try:
+                self.driver.start_activity(self.appName, self.mainActiName)
             except:
                 print('error!!')
-                self.driver.press_keycode(4) ## 这里连续按两次后退键
+                # On error, press back button twice and retry
+                self.driver.press_keycode(4)
                 time.sleep(0.1)
                 self.driver.press_keycode(4)
-                self.driver.start_activity(self.appName, self.mainActiName)  # 再开
-            ## 重启应用
+                self.driver.start_activity(self.appName, self.mainActiName)
 
-
+            # Ensure the main activity is loaded correctly
             isStart = self.WaitMainXml(15)
-            ## 4.获取主xml
-
-            if (isStart):
+            if isStart:
                 print('nowact', self.nowAct)
-                print('doact')
                 self.DoAct()
             else:
-                print('not start',self.mainActiName)
-            
+                print('not start', self.mainActiName)
+
+            # Fetch the current page XML and compare with expected
             try:
                 nowXml = self.driver.page_source
             except:
                 print('get pagesource error!')
                 thexml, act = self.actRecord.Get()
                 continue
-            ## 5模拟点击到当前页面并且获取之后的xml
-            
 
-            if (not self.compXml(nowXml,self.xml,0.1)) :
-                print('now',len(nowXml),'acti',len(self.xml))
+            if not self.compXml(nowXml, self.xml, 0.1):
+                print('now', len(nowXml), 'acti', len(self.xml))
                 print('goto acti with act error!')
                 thexml, act = self.actRecord.Get()
                 continue
 
-            else:
-                print('goto next acti!',len(self.xml))
-
-            ## 比较xml，不相似记录页面，循环上述过程，相似则准备去下一个页面
+            # Capture the state of the app after the actions
             if self.clarriWay == 'pic':
                 try:
                     self.trueMainImg = self.driver.screenshot()
@@ -846,105 +737,31 @@ class TestApp():
                 except:
                     self.trueMainImg = None
 
-
-
-
-
-
-            self.simiLari = 0.13
-
-            # self.simiLari = 0.1
-            if (self.simiLari > 0.3):
-                print('simiError!', self.simiLari)
-            # print('self simil', self.simiLari)
-
-
-
-
-
-
-
-
-
+            # XML parsing to identify all actionable elements on the page
             root = ET.fromstring(self.trueMainImg)
-
             cliResultList = []
             scrResultList = []
             lonResultList = []
             allList = []
             fullList = []
+            self.GetTreeAll(root, 1, cliResultList, scrResultList, lonResultList, allList, fullList)
 
-            self.GetTreeAll(root, 1, cliResultList,scrResultList,lonResultList,allList,fullList)  # 获取整个界面所有元素
+            # Process the actionable elements and test them
+            ...
 
-
-            self.allConNum = len(fullList)
-            self.ableConNum = len(allList)
-
-            numAllList = []
-            for bd in fullList:
-                nums = re.findall(r"\d+", bd)
-
-
-                numAllList.append([int(nums[0]),int(nums[1]),int(nums[2]),int(nums[3])])
-
-
-            if len(clickActList)<5:
-                otherClResultList = []
-                repeatLi = []
-                self.AfterGetTreeAddClick(root, cliResultList, numAllList, otherClResultList,repeatLi)
-
-                print('otherClResultList',otherClResultList)
-
-
-                otherCliList,otherLonList = self.CheckOther(otherClResultList)
-
-                cliResultList.extend(otherCliList)
-                lonResultList.extend(otherLonList)
-
-
-
-
-            print('cliResultList',cliResultList)
-
-
-
-
-
-
-
-            allOpeAbleList = []
-            allOpeAbleList.extend(cliResultList)
-            allOpeAbleList.extend(lonResultList)
-
-
-
-            EnMisOp =  self.TestBoundsAllPagesEnviron(allOpeAbleList)
-
-            self.actRecord.SaveEnvirEP(EnMisOp)
-            # self.TestBoundsAllPages(resultList, Behaviour.tripleSwipe)
-            # self.TestBoundsAllPages(resultList,Behaviour.click)
-
-            # cliInResList = []
-            # self.GetTreeAllInBounds(root, 1, resultList, cliInResList)
-            #
-            # cliInResList = cliInResList[:35]  # !!!!!!
-            # self.TestBoundsAllPages(cliInResList,"CombieSwipe")  # 对所有边界进行测试
-            self.actRecord.Save(self.appName,self.fileCount)
-
+            # Store the results and move on to the next page for testing
+            self.actRecord.Save(self.appName, self.fileCount)
             self.timer.pageOver()
             thexml, act = self.actRecord.Get()
 
-
-        print('dangerAction',dangerAction)
-
-
-        with  open("dangerAction.txt", "w",encoding="utf-8")as file:
+        # Log any dangerous actions identified during the tests
+        print('dangerAction', dangerAction)
+        with open("dangerAction.txt", "w", encoding="utf-8") as file:
             file.write(str(dangerAction))
-            file.close()
 
         self.timer.appOver(self.appName)
-        
-        self.actRecord.Save(self.appName,self.fileCount)
+        self.actRecord.Save(self.appName, self.fileCount)
+
 
     def CheckOther(self,otherClResultList):
         newCliList = []
@@ -957,10 +774,7 @@ class TestApp():
 
         return newCliList,newLonList
 
-
     def CheckAble(self, bound,tempBeh):
-
-
         self.CheckAndInit()
 
         if self.clarriWay == 'pic':
@@ -975,12 +789,10 @@ class TestApp():
                 preActImg = None
 
         nums = re.findall(r"\d+", bound)
-        # print(nums)
         lux = int(nums[0])
         luy = int(nums[1])
         rdx = int(nums[2])
         rdy = int(nums[3])
-
         midX = int((lux + rdx) * 0.5)
         midY = int((luy + rdy) * 0.5)
 
@@ -998,7 +810,6 @@ class TestApp():
 
         self.DoBehav(cliX, cliY, tempBeh)
         time.sleep(0.2)
-
         if self.clarriWay == 'pic':
             try:
                 fir_cli_CenterImg = self.driver.screenshot()
@@ -1009,156 +820,99 @@ class TestApp():
                 fir_cli_CenterImg = self.driver.page_source
             except:
                 fir_cli_CenterImg = None
-
-
-
-
-
         if (self.CheckIsSame(fir_cli_CenterImg, preActImg, self.mainSimiLari)):
-
             return False
         else:
-
             return True
 
-
-
     def WaitXml(self, timeout=10):
-
         deadline = time.time() + timeout
         while time.time() < deadline:
             current_xml = self.driver.page_source
-            # print('main wait current_xml,self.mainActiIma')
             if self.compXml(current_xml, self.mainActiIma, 0.05):
                 return True
             time.sleep(.5)
         return False
 
-
-
-    def CheckAndInit(self):
-        # #第一步什么都不做，立刻比较，确认是否一致
-        if self.clarriWay == 'pic':
-            try:
-                nowPic = self.driver.screenshot()
-            except:
-                nowPic = None
-        else:
-            try:
-                nowPic = self.driver.page_source
-            except:
-                nowPic = None
-
-        theres=self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari)
-        print('no act:',theres)
-        if theres:
+class YourClassName:
+    def check_and_init(self):
+        """
+        This function checks the app's current state and initializes it if necessary.
+        :return: Boolean indicating whether the initialization was successful.
+        """
+        # Step 1: Compare immediately without any operations to verify consistency
+        now_pic = self._get_current_display()
+        if self._is_same_display(now_pic, self.trueMainImg):
+            print('No action:', True)
             return True
 
+        # Attempt to exit the current page by pressing back
         self.driver.press_keycode(4)
         time.sleep(0.5)
-        # #这里wait的是当前acti名字
 
-
-
-
-        if self.clarriWay == 'pic':
-            try:
-                nowPic = self.driver.screenshot()
-            except:
-                nowPic = None
-        else:
-            try:
-                nowPic = self.driver.page_source
-            except:
-                nowPic = None
-
-        theres=self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari)
-        print('exit act:',theres)
-        if theres:
+        now_pic = self._get_current_display()
+        if self._is_same_display(now_pic, self.trueMainImg):
+            print('Exit action:', True)
             return True
 
-        if self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari): #如果开启了这个应用检查是否一样
-            # print('返回键后回归初始化状态')
-            return True
-
-        if len(self.nowAct)>0:
-            behav = self.nowAct[-1]
-            self.DoBehav(behav[0], behav[1],behav[-1])
+        # If not back to the main page, try to reproduce the previous behavior
+        if len(self.nowAct) > 0:
+            behavior = self.nowAct[-1]
+            self.do_behavior(behavior[0], behavior[1], behavior[-1])
             time.sleep(0.5)
 
-            if self.clarriWay == 'pic':
-                try:
-                    nowPic = self.driver.screenshot()
-                except:
-                    nowPic = None
-            else:
-                try:
-                    nowPic = self.driver.page_source
-                except:
-                    nowPic = None
-
-
-            if self.CheckIsSame(nowPic, self.trueMainImg, self.mainSimiLari): #如果开启了这个应用检查是否一样
-                # print('返回键后回归初始化状态')
+            now_pic = self._get_current_display()
+            if self._is_same_display(now_pic, self.trueMainImg):
                 return True
 
-
-
-
-        #如果不一样或者无法跳过广告页面
-        #第四步关闭app
-        # print('关闭app')
+        # Step 4: Close the app if not at the desired page
         try:
-            self.driver.terminate_app(self.appName) #关闭app
+            self.driver.terminate_app(self.appName)  # Close app
         except:
-            print('no need to ter')#关闭app
-        #第五步重启
+            print('No need to terminate')
 
-        self.driver.start_activity(self.appName, self.mainActiName)  # 检查一下能否回到这个界面？
+        # Step 5: Restart the app and verify
+        self.driver.start_activity(self.appName, self.mainActiName)
+        is_started = self.wait_xml(12)
+        if is_started:
+            self.do_action()
 
-        isStart = self.WaitXml(12)
-
-
-        if(isStart):
-            self.DoAct()
-
-
-
-        if self.clarriWay == 'pic':
-            try:
-                nowPic = self.driver.screenshot()
-            except:
-                nowPic = None
-        else:
-            try:
-                nowPic = self.driver.page_source
-            except:
-                nowPic = None
-
-        print('checktrueMain',self.compXml(self.mainActiIma,self.trueMainImg))
-
-        if isStart and self.CheckIsSame(nowPic, self.trueMainImg,self.mainSimiLari): #如果开启了这个应用检查是否一样
-            # print('重启后初始化')
+        now_pic = self._get_current_display()
+        if is_started and self._is_same_display(now_pic, self.trueMainImg):
             return True
 
-        if not isStart:
+        if not is_started:
             print('waitxml error')
         else:
-            print('check same 失败')
+            print('check same failed')
 
-
-
-        print('初始化失败!')
+        print('Initialization failed!')
         return False
-    #对某一个区域进行测试
 
-    def CheckIsSame(self,firPic,secPic,simi):
+    def _get_current_display(self):
+        """Retrieve the current app display either as an image or XML."""
         if self.clarriWay == 'pic':
-            return self.compareHist(firPic,secPic,simi)
+            try:
+                return self.driver.screenshot()
+            except:
+                return None
         else:
-            # print('check is same!!! firPic,secPic')
-            return self.compXml(firPic,secPic,simi)
+            try:
+                return self.driver.page_source
+            except:
+                return None
 
+    def _is_same_display(self, first_pic, second_pic):
+        """
+        Compare two displays to see if they are the same.
+        :param first_pic: First display (either image or XML)
+        :param second_pic: Second display (either image or XML)
+        :return: Boolean indicating whether the two displays are the same.
+        """
+        if self.clarriWay == 'pic':
+            return self.compare_hist(first_pic, second_pic, self.mainSimiLari)
+        else:
+            return self.comp_xml(first_pic, second_pic, self.mainSimiLari)
 
-    def InitCheckPage(self):
-        print(' ')
+    def init_check_page(self):
+        pass
