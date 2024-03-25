@@ -53,7 +53,7 @@ EPA 3: The user intends to visit the "My Payment" page (as shown in (c)-○1 in 
 ## Approach
 Given an app under test, the EP-Detector detects the EPAs for each widget through the following three modules, as shown in Figure below. The Target Navigation module navigates to the target pages and widgets relying on the page & widget identification. To reduce cost, the Event Trace during the navigation is logged in the Recorder to guide new navigation. The target pages and widgets are then fed into the Detection Execution module for the detection of three typical types of EPAs. Finally, the Test Oracle module has an automated oracle to compute the Diff function . for the EPAs. In this process, both the change of environment 𝐸𝑛𝑣𝑠𝑖𝑚 and page similarity P𝑠𝑖𝑚 before and after user events are computed, where the system environment is collected by the Resource Monitor, and the $P_{𝑠𝑖𝑚}$ is used to determine whether a target page is obtained in Target Navigation and Detection Execution.
 
-![workflow](./Figures/workflow.pdf)
+![workflow](./Figures/workflow.png)
 
 ### Two-stage Navigation
 To identify and locate widgets with error-prone operations (e.g., buttons, text editors, sliders), the EP-Detector adopts a widget-exploration approach, deviating from the commonly used path-exploration approach in the majority of existing model-based GUI testing. In this process, the Target Navigation module incorporates a two-stage navigation.
