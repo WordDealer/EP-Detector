@@ -8,7 +8,8 @@
     - [EPA](#epa)
     - [Motivating Examples](#motivating-examples)
   - [Approach](#approach)
-    - [Target Navigation](#target-navigation)
+    - [Two-stage Navigation](#two-stage-navigation)
+    - [Target Identification](#target-identification)
     - [Detection Execution](#detection-execution)
     - [Test Oracle](#test-oracle)
   - [Getting Started](#getting-started)
@@ -52,32 +53,26 @@ EPA 3: The user intends to visit the "My Payment" page (as shown in (c)-○1 in 
 ## Approach
 Given an app under test, the EP-Detector detects the EPAs for each widget through the following three modules, as shown in Figure below. The Target Navigation module navigates to the target pages and widgets relying on the page & widget identification. To reduce cost, the Event Trace during the navigation is logged in the Recorder to guide new navigation. The target pages and widgets are then fed into the Detection Execution module for the detection of three typical types of EPAs. Finally, the Test Oracle module has an automated oracle to compute the Diff function . for the EPAs. In this process, both the change of environment 𝐸𝑛𝑣𝑠𝑖𝑚 and page similarity P𝑠𝑖𝑚 before and after user events are computed, where the system environment is collected by the Resource Monitor, and the $P_{𝑠𝑖𝑚}$ is used to determine whether a target page is obtained in Target Navigation and Detection Execution.
 
-![workflow](./Figures/workflow.svg)
+![workflow](./Figures/workflow.pdf)
 
-### Target Navigation
+### Two-stage Navigation
 To identify and locate widgets with error-prone operations (e.g., buttons, text editors, sliders), the EP-Detector adopts a widget-exploration approach, deviating from the commonly used path-exploration approach in the majority of existing model-based GUI testing. In this process, the Target Navigation module incorporates a two-stage navigation.
 -  1: Page Navigation :Simulate user actions according to the Recorder until reaching the target test page.
 -  2: Widget Navigation：Navigate to the target widget on the given page, in order to test this widget.
 
+### Target Identification
+In traditional model-based dynamic testing, page or state recognition relies on absolute matching, where specific encoding techniques abstract the properties of a page, followed by the identification of the page through matching these abstract results. However, in real-world applications, this method of absolute matching often fails due to the potential changes in page content caused by updates to dynamic elements such as advertisements and random animations. To address this issue, the concept of page similarity based on Jaccard distance has been proposed, which evaluates the similarity of two pages by calculating the ratio of the intersection to the union of their property sets. If the similarity exceeds a predefined threshold, the pages are considered to be the same. This relative matching approach is utilized during page navigation and test assertion phases to enhance navigation accuracy and to determine the execution path breakpoints in test assertions, and in the execution phase for state abstraction and clustering of page states. Additionally, the similarity calculation also considers environmental factors such as CPU, RAM, and network conditions to further optimize the accuracy and efficiency of testing.
+
 ### Detection Execution
-Analyzing and recognizing user behaviors while operating widgets can be a complex and confusing task. In this scenario, we are primarily focusing on user gestures that might impact the operable widgets, guided by gesture-related Android classes like android.view.View, android.widget, android.view.GestureDetector, and MotionEvent.
 
-Since detecting all the investigated behaviors for each widget can be cost-consuming, redundant and low-value behaviors are filtered using the following strategies:
+EPAs  can be categorized into three types: confusing behaviors (bEPAs), unsuitable layout (aEPAs), and extreme resources (eEPAs). The section on confusing behaviors focuses on the complex interactions users have with widgets, especially those that may be disrupted by natural factors such as voice control and phone shaking. To address this challenge, the research shifts its emphasis towards user gesture events, summarizing user behaviors through the analysis of gesture-related classes in Android. Strategies are employed to filter out redundant and non-critical behaviors, ultimately identifying 12 typical user interactions. These behaviors are divided into three groups based on their confusion potential: click, long click, and scroll, with each group's confusion degree defined by variations in the number of operations, number of fingers used, operation distance, and duration.
 
-Filtering Strategies
-- **Directional Behaviors:** Only the most commonly used direction is preserved, e.g., upSwipe is preserved, and downSwipe is filtered out.
-- **Similar Behaviors:** Only the representative one is preserved, e.g., swipe is preserved, and fling is filtered out.
-- **System-specific and Rarely Used Behaviors:** Behaviors like knuckle tap and twoFingerDoubleClick are omitted.
+Additionally, the unsuitable layout section discusses EPAs arising from improper widget design, with a focus on layout-related factors such as size and spacing, and defines conditions for unsuitable layouts. The extreme resources section examines EPAs caused by insufficient device resources, such as CPU, RAM, and network capacity, particularly under conditions of resource overload that may lead to execution anomalies like page freezing and operation failures, potentially resulting in user errors.
+
+For these two types of EPAs, a dynamic analysis approach is proposed for detection, which includes simulating user interactions and recording the outcomes to identify bEPAs, and dynamically simulating operations to detect EPAs caused by unsuitable layouts and resource overloads.
 ###  Test Oracle
-EP-Detector supports an automated test oracle, where the function Diff (Eq. 3 in §4, §5.2.3) is computed using different strategies for the three types of EPAs.
 
-- In the detection of bEPA, given current state 𝑠 and a pair of confused behaviours (𝑒1 and 𝑒2) from the same behaviour group in Table 2, the test oracle aims to determine whether `Diff (𝑠, 𝛿 (𝑠, 𝑒1))) > 𝜏 & Diff (𝑠, 𝛿 (𝑠, 𝑒2))) > 𝜏` holds.
-- In the detection of aEPA, given current state 𝑠 and a pair of operations on safe area §5.3.3 (𝑒1 and 𝑒2), the test oracle aims to determine whether `Diff (𝛿 (𝑠, 𝑒1), 𝛿 (𝑠, 𝑒2)) > 𝜏` holds.
-- In the detection of eEPA, the test oracle contains two parts:
-  1. Heavier overload. Assuming 𝑠 and 𝑠′ are the states before and after𝑐&𝑟 operations respectively, the oracle determines whether `Diff (𝑠.𝑒𝑛𝑣, 𝑠′.𝑒𝑛𝑣) > 𝜏` holds.
-  2. Unintended misoperation. Through page identification, the test oracle first checks if a page jump from page A to page B occurs when 𝑐&𝑟 operations are performed. Then assuming 𝑠 and 𝑠′ are the states before and after operating on page B respectively, the oracle determines whether `Diff (𝑠, 𝑠′) > 𝜏` holds.
-
-Except for the detection of heavier overload, the 𝛼 and 𝛽 in Diff are determined in a dynamic way, where the P𝑠𝑖𝑚 and 𝐸𝑛𝑣𝑠𝑖𝑚 are first computed and then the two coefficients are determined.
+EP-Detector is an automated testing tool that employs various strategies to compute the Diff function to detect three types of execution path anomalies (EPAs): confusing behaviors (bEPA), unsuitable layouts (aEPA), and extreme resources (eEPA). For bEPAs, EP-Detector checks if the new page triggered by confusing behaviors differs from the original page or the page triggered by the base behavior; if so, a bEPA is identified. The detection of aEPAs is based on the principle that two identical operations performed within the safe area should yield the same outcomes, otherwise, anomalies may arise. The detection of eEPAs is two-fold: it checks whether the environmental change following continuous and repeated operations falls below a certain threshold, and whether unintended misoperations occur after a page jump. Additionally, EP-Detector dynamically determines the α and β parameters used to compute the Diff function, based on the calculated results of page similarity (Psim) and environmental similarity (Envsim).
 
 ## Getting Started
 
