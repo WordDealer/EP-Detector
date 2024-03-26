@@ -25,6 +25,7 @@
       - [3. Fine-Tuning Android Device Parameters](#3-fine-tuning-android-device-parameters)
       - [4.Initiating the Appium Service](#4initiating-the-appium-service)
     - [Usage](#usage)
+  - [Result](#result)
 
 
 ## Error-prone Operation Anomaly(EPA)
@@ -168,3 +169,5 @@ cd EP-Detector
 conda activate EPDetector
 python MainForEnvs.py
 ```
+## Result
+The [dataset](./Data/Dataset/), [results](./Data/Result/), and [manually annotated results](./Data/Manual_Result/) for EP-Detector can be found here.
