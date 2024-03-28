@@ -1,6 +1,6 @@
 ## Download
 
-Here is a list of tested apps (without bug confirmation) as of June 2023. These are available [here](https://drive.google.com/file/d/10VtXF_IuAc9lSuV93rmaMPgML1gjzeXv/view?usp=sharing).
+Here is a list of tested apps (without bug confirmation) as of March 2024.
 
 
 | **Id** | **App**                  | **Apk**                                     | **version**                  | **Size** | **Download** |
