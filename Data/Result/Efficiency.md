@@ -1,6 +1,6 @@
 ## Efficiency
 This is the time spent on the EP-Detector test apps.
-| **Id**      | **App+H34EE1:H41**       | **Apk**                                     | **Time (h)** |
+| **Id**      | **App**       | **Apk**                                     | **Time (hr)** |
 |:-----------:|:------------------------:|:-------------------------------------------:|:------------:|
 | **1**       | iTranslate               | at.nk.tools.iTranslate                      | 1.7          |
 | **2**       | Battery HD Pro           | ch.smalltech.battery.pro                    | 3.2          |
