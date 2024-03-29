@@ -170,4 +170,4 @@ conda activate EPDetector
 python MainForEnvs.py
 ```
 ## Result
-The [dataset](./Data/Dataset/), [results](./Data/Result/), and [manually annotated results](./Data/Manual_Result/) for EP-Detector can be found here.
+The [results](./Data/Result/), and [manually annotated results](./Data/Manual_Result/) for EP-Detector can be found here.
