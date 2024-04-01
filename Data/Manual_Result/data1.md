@@ -1,6 +1,6 @@
 | **EPA** | **App**                  | **Page** | **Widget** | **Security Consequences** | **Picture**                          |
 |---------|--------------------------|----------|------------|---------------------------|--------------------------------------|
-| **1**   | Car Launcher             | 1        | 1          | Functionality             | [Details](Pictures/app1/page1.jpg)  |
+| **1**   | Car Launcher             | 1        | 1          | Functionality             | [Details](Pictures/app1/page1.JPG)  |
 | **2**   | Car Launcher             | 1        | 2          | Functionality             | ![Details](Pictures/app1/page1.jpg)  |
 | **3**   | Car Launcher             | 1        | 3          | Functionality             | ![Details](Pictures/app1/page1.jpg)  |
 | **4**   | Car Launcher             | 1        | 4          | Functionality             | ![Details](Pictures/app1/page1.jpg)  |
