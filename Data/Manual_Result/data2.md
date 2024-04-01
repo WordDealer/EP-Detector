@@ -1,4 +1,4 @@
-| **EPA** | **App**              | **Page** | **Widget** | **Security Consequences(可以先选择SecurityFunctionality3EfficiencyUser Experience来提高输入速度)** | **Picture**                          |
+| **EPA** | **App**              | **Page** | **Widget** | **Security Consequences** | **Picture**                          |
 |---------|----------------------|----------|------------|----------------------------------------------------------------------------------------|--------------------------------------|
 | **1**   | Everydoggy           | 1        | 1          | 4                                                                                      | [Details](Pictures/app8/page1.JPG)   |
 | **2**   | Everydoggy           | 1        | 2          | 1                                                                                      | [Details](Pictures/app8/page1.JPG)   |
