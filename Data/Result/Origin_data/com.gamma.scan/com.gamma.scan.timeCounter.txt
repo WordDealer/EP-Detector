@@ -1,0 +1,11 @@
+app  3658.9588654
+page  3511.7749593999997
+page num  1
+control  184.9146840666667
+con num  15
+genarate  137.20450689499995
+gen num  20
+oracle  0.7301663866666785
+ora num  15
+navigation  1.2539002399999561
+na num  20
